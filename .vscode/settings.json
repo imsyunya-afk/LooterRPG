@@ -1,6 +1,6 @@
 {
     "luau-lsp.plugin.enabled": true,
     "robloxLsp.diagnostics.disable": [
-        1012
+        "1012"
     ]
 }
