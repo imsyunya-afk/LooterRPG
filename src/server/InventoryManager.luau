@@ -24,7 +24,10 @@ end
 
 function InventoryManager.addItem(player, itemName)
     if not playerInventories[player.UserId] then
-        playerInventories[player.UserId] = { SafePocket = nil, Hotbar = {} }
+        playerInventories[player.UserId] = {
+            SafePocket = "",
+            Hotbar = {"", "", "", "", "", "", ""}
+        }
     end
 
     local myItems = playerInventories[player.UserId]
@@ -66,6 +69,35 @@ function InventoryManager.removeItem(player, slotName)
     updateUIEvent:FireClient(player, myItems)
 
     return removedItemName
+end
+
+function InventoryManager.swapItems(player, slot1Name, slot2Name)
+    local myItems = playerInventories[player.UserId]
+    if not myItems then return false end
+
+    local function getItem(slotName)
+        if slotName == "SafeSlot1" then return myItems.SafePocket or "" end
+        local index = tonumber(string.match(slotName, "%d+"))
+        return myItems.Hotbar[index] or ""
+    end
+
+    local function setItem(slotName, itemName)
+        if slotName == "SafeSlot1" then
+            myItems.SafePocket = itemName
+        else
+            local index = tonumber(string.match(slotName, "%d+"))
+            if index then myItems.Hotbar[index] = itemName end
+        end
+    end
+
+    local item1 = getItem(slot1Name)
+    local item2 = getItem(slot2Name)
+
+    setItem(slot1Name, item2)
+    setItem(slot2Name, item1)
+
+    updateUIEvent:FireClient(player, myItems)
+    return true
 end
 
 Players.PlayerRemoving:Connect(function(player)

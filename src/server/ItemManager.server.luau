@@ -13,10 +13,11 @@ local function onItemPickedUp(prompt, player)
             print(player.Name .. " のインベントリはいっぱいです！ " .. itemName .. " を拾うことができません。")
             return
         end
-        print(player.Name .. " picked up: " .. itemInfo.Name)
         prompt.Enabled = false
-		prompt.Parent:Destroy()	
-		InventoryManager.addItem(player, itemName)
+        InventoryManager.addItem(player, itemName)
+        print(player.Name .. " picked up: " .. itemInfo.Name)
+        task.wait(0.05)
+		prompt.Parent:Destroy()
     else
         print("Error: " .. itemName .. " はカタログにありません！")
     end
@@ -51,4 +52,11 @@ DropItemRequest.OnServerEvent:Connect(function(player, slotName, clientItemName)
             warn("Error: " .. actualItemName .. " のテンプレートが見つかりません！")
         end
     end
+end)
+
+local SwapItemRequest = ReplicatedStorage:WaitForChild("Events"):WaitForChild("SwapItemRequest")
+
+SwapItemRequest.OnServerEvent:Connect(function(player, slot1Name, slot2Name)
+    
+    InventoryManager.swapItems(player, slot1Name, slot2Name)
 end)

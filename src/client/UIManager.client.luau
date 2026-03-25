@@ -12,6 +12,7 @@ local hotbar = container:WaitForChild("HotbarFrame")
 local updateUIEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("UpdateInventoryUI")
 
 local DropItemRequest = ReplicatedStorage:WaitForChild("Events"):WaitForChild("DropItemRequest")
+local SwapItemRequest = ReplicatedStorage:WaitForChild("Events"):WaitForChild("SwapItemRequest")
 
 local UserInputService = game:GetService("UserInputService")
 local dropZone = inventoryGui:WaitForChild("DropZoneFrame")
@@ -86,19 +87,46 @@ UserInputService.InputEnded:Connect(function(input)
             local minY = dropZone.AbsolutePosition.Y
             local maxY = minY + dropZone.AbsoluteSize.Y
 
+            local isDropSuccess = false
+
             if currentPos.X >= minX and currentPos.X <= maxX and currentPos.Y >= minY and currentPos.Y <= maxY then
                 print("アイテムがドロップゾーンにドロップされました: " .. draggingItemName)
-
                 DropItemRequest:FireServer(sourceSlotName, draggingItemName)
+
+                isDropSuccess = true
             else
-                print("ドロップゾーンの外だったので、アイテムはドロップされませんでした。")
+                local targetSlotName = nil
+
+                for _, slot in ipairs(allSlots) do
+                    if slot.Name ~= sourceSlotName then
+                        local sMinX = slot.AbsolutePosition.X
+                        local sMaxX = sMinX + slot.AbsoluteSize.X
+                        local sMinY = slot.AbsolutePosition.Y
+                        local sMaxY = sMinY + slot.AbsoluteSize.Y
+
+                        if currentPos.X >= sMinX and currentPos.X <= sMaxX and currentPos.Y >= sMinY and currentPos.Y <= sMaxY then
+                            targetSlotName = slot.Name
+                            break
+                        end
+                    end
+                end
+
+                if targetSlotName then
+                    SwapItemRequest:FireServer(sourceSlotName, targetSlotName)
+
+                    isDropSuccess = true
+                end
             end
 
             dropZone.Visible = false
             dragIcon.Visible = false
 
             if sourceSlot then
-                sourceSlot.TextTransparency = 0
+                if isDropSuccess then
+                    sourceSlot.TextTransparency = 1
+                else
+                    sourceSlot.TextTransparency = 0
+                end
             end
         end
 
@@ -116,6 +144,7 @@ local function onInventoryUpdated(myItems)
 
     if safeTextLabel then
         safeTextLabel.Text = myItems.SafePocket or ""
+        safeTextLabel.TextTransparency = 0
     end
 
     for i = 1, 7 do
@@ -126,6 +155,7 @@ local function onInventoryUpdated(myItems)
             local textLabel = targetSlot:FindFirstChild("ItemName", true)
             if textLabel then
                 textLabel.Text = myItems.Hotbar[i] or ""
+                textLabel.TextTransparency = 0
             end
         end
     end
